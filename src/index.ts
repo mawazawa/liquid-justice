@@ -90,5 +90,51 @@ export {
   type ScrollRevealResult
 } from './lib/use-scroll-reveal';
 
+// === PREMIUM 2025 COMPONENTS (Apple Pay-Level) ===
+
+// GPU-Accelerated Confetti (WebGL, Iridescent)
+export {
+  useConfetti,
+  Confetti,
+  ConfettiButton,
+  type ConfettiOptions
+} from './components/ui/confetti';
+
+// Holographic Shader Effects (CSS Houdini Paint API)
+export {
+  holographicSealWorklet,
+  iridescentShimmerWorklet,
+  glassRefractionWorklet,
+  holographicWorklets,
+  supportsHoudiniPaint,
+  useHolographicShaders,
+  HolographicSeal,
+  type HolographicSealProps
+} from './lib/holographic-shader';
+
+// Command Palette (Cmd+K, Linear/Vercel-style)
+export {
+  CommandPalette,
+  useCommandPalette,
+  type CommandAction,
+  type CommandPaletteProps
+} from './components/ui/command-palette';
+
+// Swipe Gestures (iOS/Android Patterns)
+export {
+  useSwipeGesture,
+  useSwipeToDelete,
+  type SwipeGestureOptions,
+  type SwipeCallbacks,
+  type SwipeGestureResult
+} from './lib/use-swipe-gesture';
+
+// Audio Feedback (Mindfulness Gong, Web Audio API)
+export {
+  useAudioFeedback,
+  audioFeedback,
+  type AudioFeedbackOptions
+} from './lib/audio-feedback';
+
 // Icons (re-export from lucide-react)
 export * from './icons';
