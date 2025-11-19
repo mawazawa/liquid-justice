@@ -1,5 +1,11 @@
 # 🏛️ Liquid Justice Design System
 
+[![CI](https://github.com/mawazawa/liquid-justice/workflows/CI/badge.svg)](https://github.com/mawazawa/liquid-justice/actions/workflows/ci.yml)
+[![Accessibility](https://github.com/mawazawa/liquid-justice/workflows/Accessibility/badge.svg)](https://github.com/mawazawa/liquid-justice/actions/workflows/accessibility.yml)
+[![Bundle Size](https://github.com/mawazawa/liquid-justice/workflows/Bundle%20Size/badge.svg)](https://github.com/mawazawa/liquid-justice/actions/workflows/bundle-size.yml)
+[![npm version](https://img.shields.io/npm/v/@liquid-justice/design-system.svg)](https://www.npmjs.com/package/@liquid-justice/design-system)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 > **"Visual Wow Factor IS The Moat"** - Constitutional Principle #3
 
 Premium UI component library for legal tech applications, featuring Apple-inspired Liquid Glass aesthetics, science-backed UX patterns, and bleeding-edge CSS features.
@@ -258,6 +264,73 @@ Stories include:
 **↑ Memory**: Bounce physics = "I remember that app that bounced perfectly." Positive association = confidence.
 
 **↑ Confidence**: Beautiful UI = "This will work. I'm in good hands." First impressions matter in high-stakes situations.
+
+## 🛠️ Development
+
+### Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/mawazawa/liquid-justice.git
+cd liquid-justice
+
+# Install dependencies
+npm install
+
+# Start Storybook development server
+npm run storybook
+```
+
+### Testing
+
+```bash
+# Run unit tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run tests with UI
+npm run test:ui
+
+# Run Storybook accessibility tests
+npm run test:storybook
+
+# Type checking
+npm run typecheck
+
+# Linting
+npm run lint
+```
+
+### Building
+
+```bash
+# Build the library
+npm run build
+
+# Outputs:
+# - dist/liquid-justice.mjs (ESM)
+# - dist/liquid-justice.cjs (CommonJS)
+# - dist/types/index.d.ts (TypeScript declarations)
+# - dist/liquid-justice.css (Styles)
+
+# Analyze bundle size
+npm run size
+
+# View bundle visualization
+npm run analyze
+```
+
+### Quality Gates
+
+All PRs must pass:
+- ✅ **Type checking** - No TypeScript errors
+- ✅ **Linting** - No ESLint errors or warnings
+- ✅ **Tests** - 70%+ coverage on all metrics
+- ✅ **Accessibility** - WCAG 2.2 AA compliance (0 violations)
+- ✅ **Build** - Successful library build
+- ✅ **Bundle size** - < 100 KB gzipped
 
 ## 🤝 Contributing
 

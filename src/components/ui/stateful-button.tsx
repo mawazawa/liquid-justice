@@ -73,7 +73,6 @@ export const StatefulButton = React.forwardRef<HTMLButtonElement, StatefulButton
     const [state, setState] = React.useState<ButtonState>("idle");
     const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
     const [elapsedTime, setElapsedTime] = React.useState(0);
-    const [stepStartTime, setStepStartTime] = React.useState(0);
 
     const intervalRef = React.useRef<number>();
     const startTimeRef = React.useRef<number>();
@@ -98,8 +97,6 @@ export const StatefulButton = React.forwardRef<HTMLButtonElement, StatefulButton
     // Process step execution
     React.useEffect(() => {
       if (state === "processing" && currentStep) {
-        const stepStart = Date.now();
-        setStepStartTime(stepStart);
 
         // Show step for minimum 300ms (visible but rushed)
         const displayDuration = Math.max(currentStep.duration, 300);
