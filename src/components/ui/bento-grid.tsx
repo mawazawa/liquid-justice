@@ -36,6 +36,15 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
+// Gap sizes hoisted to module scope to avoid recreation on every render
+const GAP_SIZES = {
+  none: "0",
+  sm: "var(--space-2, 8px)",
+  md: "var(--space-4, 16px)",
+  lg: "var(--space-6, 24px)",
+  xl: "var(--space-8, 32px)",
+} as const;
+
 export interface BentoGridProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Number of columns in grid (12-column system recommended) */
   columns?: number;
@@ -60,34 +69,54 @@ export const BentoGrid = React.forwardRef<HTMLDivElement, BentoGridProps>(
       className,
       style,
       children,
+      onClick,
+      onKeyDown,
       ...props
     },
     ref
   ) => {
-    // Gap sizes
-    const gapSizes = {
-      none: "0",
-      sm: "var(--space-2, 8px)",
-      md: "var(--space-4, 16px)",
-      lg: "var(--space-6, 24px)",
-      xl: "var(--space-8, 32px)",
-    };
-
     const gridStyle: React.CSSProperties = {
       display: "grid",
       gridTemplateColumns: minColumnWidth
         ? `repeat(auto-fit, minmax(${minColumnWidth}, 1fr))`
         : `repeat(${columns}, 1fr)`,
-      gap: gapSizes[gap],
+      gap: GAP_SIZES[gap],
       containerType: containerQueries ? "inline-size" : undefined,
       ...style,
     };
+
+    // Handle keyboard interaction for accessibility
+    const handleKeyDown = React.useCallback(
+      (e: React.KeyboardEvent<HTMLDivElement>) => {
+        // Trigger onClick for Enter and Space keys
+        if ((e.key === "Enter" || e.key === " ") && onClick) {
+          e.preventDefault();
+          onClick(e as unknown as React.MouseEvent<HTMLDivElement>);
+        }
+        // Call user's onKeyDown if provided
+        onKeyDown?.(e);
+      },
+      [onClick, onKeyDown]
+    );
+
+    // Determine accessibility attributes
+    const isInteractive = onClick !== undefined;
+    const accessibilityProps = isInteractive
+      ? {
+          role: "button" as const,
+          tabIndex: 0,
+          onKeyDown: handleKeyDown,
+        }
+      : {
+          role: "group" as const,
+        };
 
     return (
       <div
         ref={ref}
         className={cn("bento-grid w-full", className)}
         style={gridStyle}
+        {...accessibilityProps}
         {...props}
       >
         {children}
@@ -150,6 +179,8 @@ export const BentoCard = React.forwardRef<HTMLDivElement, BentoCardProps>(
       className,
       style,
       children,
+      onClick,
+      onKeyDown,
       ...props
     },
     ref
@@ -185,6 +216,32 @@ export const BentoCard = React.forwardRef<HTMLDivElement, BentoCardProps>(
       setMousePosition({ x: 0, y: 0 });
     };
 
+    // Handle keyboard interaction for accessibility
+    const handleKeyDown = React.useCallback(
+      (e: React.KeyboardEvent<HTMLDivElement>) => {
+        // Trigger onClick for Enter and Space keys
+        if ((e.key === "Enter" || e.key === " ") && onClick) {
+          e.preventDefault();
+          onClick(e as unknown as React.MouseEvent<HTMLDivElement>);
+        }
+        // Call user's onKeyDown if provided
+        onKeyDown?.(e);
+      },
+      [onClick, onKeyDown]
+    );
+
+    // Determine accessibility attributes
+    const isInteractive = onClick !== undefined;
+    const accessibilityProps = isInteractive
+      ? {
+          role: "button" as const,
+          tabIndex: 0,
+          onKeyDown: handleKeyDown,
+        }
+      : {
+          role: "group" as const,
+        };
+
     // Variant styles
     const variantClasses = {
       default: "bg-card border border-border",
@@ -214,6 +271,7 @@ export const BentoCard = React.forwardRef<HTMLDivElement, BentoCardProps>(
           variantClasses[variant],
           hover3D && "hover-lift",
           magnetic && "cursor-pointer",
+          !isInteractive && "cursor-default", // Avoid pointer styling for non-interactive
           "squircle-lg", // Apply squircle corners
           className
         )}
@@ -221,6 +279,7 @@ export const BentoCard = React.forwardRef<HTMLDivElement, BentoCardProps>(
         onMouseMove={handle3DMouseMove}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        {...accessibilityProps}
         {...props}
       >
         {/* 3D depth layer (subtle inner shadow for depth) */}

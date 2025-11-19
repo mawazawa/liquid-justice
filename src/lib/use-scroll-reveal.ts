@@ -34,6 +34,26 @@
 
 import { useEffect, useState, useRef, RefObject } from 'react';
 
+/**
+ * Shared hook for prefers-reduced-motion detection
+ * 
+ * @returns boolean indicating if user prefers reduced motion
+ */
+export function usePrefersReducedMotion(): boolean {
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(mediaQuery.matches);
+
+    const handleChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  return reducedMotion;
+}
+
 export interface UseScrollRevealOptions {
   /** Trigger when this % of element is visible (0-1) */
   threshold?: number;
@@ -111,17 +131,7 @@ export function useScrollReveal(options: UseScrollRevealOptions = {}): ScrollRev
   const ref = useRef<HTMLElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [hasBeenSeen, setHasBeenSeen] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
-
-  // Check for reduced motion preference
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReducedMotion(mediaQuery.matches);
-
-    const handleChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
+  const reducedMotion = usePrefersReducedMotion();
 
   // Set up Intersection Observer
   useEffect(() => {
@@ -215,39 +225,37 @@ export function useScrollReveal(options: UseScrollRevealOptions = {}): ScrollRev
 }
 
 /**
- * Hook for staggered list reveals (children animate in sequence)
+ * Utility function to compute staggered delays for scroll reveals
+ * 
+ * Use this with individual useScrollReveal calls to avoid hook-in-loop violations
  *
  * @example
  * ```tsx
- * const items = useStaggeredReveal(5, {
- *   direction: 'up',
- *   staggerDelay: 50,
- * });
- *
+ * const delays = computeStaggeredDelays(5, { staggerDelay: 50, delay: 0 });
+ * 
  * return (
  *   <ul>
- *     {items.map((item, i) => (
- *       <li key={i} ref={item.ref} style={item.style} className={item.className}>
- *         Item {i}
- *       </li>
- *     ))}
+ *     {items.map((item, i) => {
+ *       const { ref, style, className } = useScrollReveal({
+ *         direction: 'up',
+ *         delay: delays[i],
+ *       });
+ *       return (
+ *         <li key={i} ref={ref} style={style} className={className}>
+ *           Item {i}
+ *         </li>
+ *       );
+ *     })}
  *   </ul>
  * );
  * ```
  */
-export function useStaggeredReveal(
+export function computeStaggeredDelays(
   count: number,
-  options: UseScrollRevealOptions & { staggerDelay?: number } = {}
-): ScrollRevealResult[] {
-  const { staggerDelay = 50, ...baseOptions } = options;
-
-  return Array.from({ length: count }, (_, index) =>
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useScrollReveal({
-      ...baseOptions,
-      delay: (baseOptions.delay || 0) + index * staggerDelay,
-    })
-  );
+  options: { staggerDelay?: number; delay?: number } = {}
+): number[] {
+  const { staggerDelay = 50, delay = 0 } = options;
+  return Array.from({ length: count }, (_, index) => delay + index * staggerDelay);
 }
 
 /**
@@ -270,22 +278,14 @@ export function useParallaxScroll(options: {
 
   const ref = useRef<HTMLElement>(null);
   const [offset, setOffset] = useState(0);
-  const [reducedMotion, setReducedMotion] = useState(false);
-
-  // Check for reduced motion preference
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReducedMotion(mediaQuery.matches);
-
-    const handleChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
+  const reducedMotion = usePrefersReducedMotion();
+  const rafIdRef = useRef<number | null>(null);
+  const tickingRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (reducedMotion) return;
 
-    const handleScroll = () => {
+    const updateOffset = () => {
       if (!ref.current) return;
 
       const rect = ref.current.getBoundingClientRect();
@@ -293,13 +293,28 @@ export function useParallaxScroll(options: {
       const parallaxOffset = scrollPercent * 100 * speed;
 
       setOffset(parallaxOffset);
+      tickingRef.current = false;
+    };
+
+    const handleScroll = () => {
+      if (!tickingRef.current) {
+        rafIdRef.current = requestAnimationFrame(() => {
+          updateOffset();
+        });
+        tickingRef.current = true;
+      }
     };
 
     // Use passive listener for performance
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll(); // Initial calculation
 
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
+    };
   }, [speed, reducedMotion]);
 
   const transform = reducedMotion

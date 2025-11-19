@@ -238,6 +238,42 @@ export const elevation = {
 } as const;
 
 /* ============================================================================
+   BUTTON SIZE TOKENS
+   ========================================================================= */
+
+export const buttonSizes = {
+  // Height tokens (Tailwind classes)
+  heightMd: 'h-11',
+  heightSm: 'h-9',
+  heightLg: 'h-12',
+  heightIcon: 'h-11',
+  
+  // Min-height tokens (WCAG touch target compliance)
+  minHeightMd: 'min-h-[48px]',
+  minHeightSm: 'min-h-[48px]',
+  minHeightLg: 'min-h-[56px]',
+  minHeightIcon: 'min-h-[56px]',
+  
+  // Width tokens for icon buttons
+  widthIcon: 'w-11',
+  minWidthIcon: 'min-w-[56px]',
+  
+  // Complete size class strings for reuse
+  default: 'h-11 min-h-[48px] px-6 py-2.5',
+  sm: 'h-9 min-h-[48px] rounded-full px-4 py-2',
+  lg: 'h-12 min-h-[56px] rounded-full px-10 py-3',
+  icon: 'h-11 w-11 min-h-[56px] min-w-[56px]',
+} as const;
+
+export const chamferedButtonSizes = {
+  // Complete size class strings for ChamferedButton (slightly larger for premium feel)
+  default: 'h-12 min-h-[48px] px-8 py-3',
+  sm: 'h-10 min-h-[48px] px-6 py-2.5 text-sm',
+  lg: 'h-14 min-h-[56px] px-12 py-4 text-base',
+  icon: 'h-12 w-12 min-h-[56px] min-w-[56px]',
+} as const;
+
+/* ============================================================================
    HAPTIC FEEDBACK TOKENS
    ========================================================================= */
 
@@ -264,6 +300,8 @@ export const tokens = {
   accessibility,
   radii,
   elevation,
+  buttonSizes,
+  chamferedButtonSizes,
   haptic,
 } as const;
 

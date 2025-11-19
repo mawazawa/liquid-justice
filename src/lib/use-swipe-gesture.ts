@@ -24,15 +24,14 @@
  *
  * PERFORMANCE:
  * - Uses touch events (native, no polyfill)
- * - RequestAnimationFrame for smooth animation
  * - GPU-accelerated transforms
- * - Debounced threshold checks
  *
  * @see https://developer.apple.com/design/human-interface-guidelines/gestures
  * @see https://m3.material.io/components/lists/specs#5c67e11f-c7bb-49fc-8764-c5a6e35f47c6
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { RefObject } from 'react';
 
 export interface SwipeGestureOptions {
   /** Minimum distance (px) to trigger swipe */
@@ -82,7 +81,7 @@ export interface SwipeCallbacks {
 
 export interface SwipeGestureResult {
   /** Ref to attach to swipeable element */
-  ref: React.RefObject<HTMLElement>;
+  ref: RefObject<HTMLElement>;
 
   /** Is currently swiping */
   isSwiping: boolean;
@@ -132,7 +131,7 @@ export function useSwipeGesture(
   // Touch state
   const touchStart = useRef<{ x: number; y: number; time: number } | null>(null);
   const lastTouch = useRef<{ x: number; y: number; time: number } | null>(null);
-  const rafRef = useRef<number | null>(null);
+  const hasStartedRef = useRef<boolean>(false);
 
   // Handle touch start
   const handleTouchStart = useCallback(
@@ -146,6 +145,7 @@ export function useSwipeGesture(
         time: Date.now(),
       };
       lastTouch.current = { ...touchStart.current };
+      hasStartedRef.current = false;
       setIsSwiping(true);
     },
     []
@@ -207,8 +207,9 @@ export function useSwipeGesture(
       }
 
       // Fire start callback once
-      if (!rafRef.current) {
+      if (!hasStartedRef.current) {
         callbacks.onSwipeStart?.(direction);
+        hasStartedRef.current = true;
       }
     },
     [threshold, friction, enableHorizontal, enableVertical, preventDefault, callbacks]
@@ -259,7 +260,7 @@ export function useSwipeGesture(
       setProgress(0);
       touchStart.current = null;
       lastTouch.current = null;
-      rafRef.current = null;
+      hasStartedRef.current = false;
 
       callbacks.onSwipeEnd?.();
     },
