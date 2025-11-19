@@ -39,6 +39,7 @@ storybook-static/
 
 # IDE
 .vscode/
+.cursor/
 .idea/
 *.swp
 *.swo

@@ -8,7 +8,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Button } from './button';
 import { StatefulButton } from './stateful-button';
-import { Download, Trash2, Check, X, Play, Settings } from '@/icons';
+import { Download, Trash2, Check, X, Play, Settings } from 'lucide-react';
 
 const meta = {
   title: 'Components/Button',

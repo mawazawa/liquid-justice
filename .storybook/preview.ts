@@ -1,7 +1,6 @@
 import type { Preview } from '@storybook/react-vite';
 import  React from 'react';
-import '../src/index.css'; // Import Tailwind CSS and global styles
-import { Toaster } from '../src/components/ui/sonner';
+import '../styles/liquid-justice.css'; // Import Tailwind CSS and global styles
 
 const preview: Preview = {
   parameters: {
@@ -37,8 +36,7 @@ const preview: Preview = {
       React.createElement(
         'div',
         null,
-        React.createElement(Story),
-        React.createElement(Toaster)
+        React.createElement(Story)
       ),
   ],
 };
