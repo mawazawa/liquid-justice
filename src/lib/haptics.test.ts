@@ -5,6 +5,7 @@ import {
   isHapticsSupported,
   getHapticPreference,
   setHapticPreference,
+  __resetHapticsCache,
 } from './haptics';
 
 describe('Haptics', () => {
@@ -12,6 +13,9 @@ describe('Haptics', () => {
   let matchMediaMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
+    // Reset haptics cache to allow tests to change device conditions
+    __resetHapticsCache();
+
     // Setup vibrate mock
     vibrateMock = vi.fn();
     Object.defineProperty(navigator, 'vibrate', {
@@ -202,6 +206,45 @@ describe('Haptics', () => {
 
       setHapticPreference(true);
       expect(getHapticPreference()).toBe(true);
+    });
+  });
+
+  describe('Cache Reset Bug Fix', () => {
+    it('correctly detects device changes after cache reset', () => {
+      // First call - mobile device (hover: none matches)
+      expect(isHapticsSupported()).toBe(true);
+
+      // Reset cache and change to desktop
+      __resetHapticsCache();
+      matchMediaMock.mockImplementation((query) => ({
+        matches: query !== '(hover: none)', // Desktop has hover
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }));
+
+      // Should now detect as desktop (no haptics support)
+      expect(isHapticsSupported()).toBe(false);
+
+      // Reset again and go back to mobile
+      __resetHapticsCache();
+      matchMediaMock.mockImplementation((query) => ({
+        matches: query === '(hover: none)', // Mobile
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }));
+
+      // Should detect as mobile again
+      expect(isHapticsSupported()).toBe(true);
     });
   });
 });

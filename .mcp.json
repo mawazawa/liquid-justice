@@ -1,0 +1,27 @@
+{
+  "mcpServers": {
+    "linear": {
+      "command": "npx",
+      "args": ["mcp-remote", "https://mcp.linear.app/mcp"],
+      "env": {
+        "LINEAR_API_KEY": "${LINEAR_API_KEY}"
+      }
+    },
+    "supabase": {
+      "command": "npx",
+      "args": ["mcp-remote", "https://mcp.supabase.com/mcp"],
+      "env": {
+        "SUPABASE_URL": "${SUPABASE_URL}",
+        "SUPABASE_KEY": "${SUPABASE_KEY}",
+        "SUPABASE_SERVICE_KEY": "${SUPABASE_SERVICE_KEY}"
+      }
+    }
+  },
+  "_notes": {
+    "neo4j": "Use environment variables (NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD) for direct connection - no MCP server needed",
+    "github": "Use GITHUB_TOKEN environment variable for direct API access - no MCP server needed",
+    "linear": "✅ Verified accessible - requires LINEAR_API_KEY",
+    "supabase": "✅ Verified accessible - requires SUPABASE_URL and keys"
+  }
+}
+

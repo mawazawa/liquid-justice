@@ -1,0 +1,259 @@
+name: Linear Automated Triage
+
+on:
+  issues:
+    types: [opened, edited]
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  triage-issue:
+    name: Triage Linear Issue
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues'
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for context
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Analyze issue with AI
+        id: analyze
+        uses: actions/github-script@v7
+        env:
+          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+          # Use OAuth token for CloudMax subscription (preferred) or fallback to API key
+          ANTHROPIC_API_KEY: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN || secrets.ANTHROPIC_API_KEY }}
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const title = issue.title;
+            const body = issue.body || '';
+            const labels = issue.labels?.map(l => l.name) || [];
+            
+            // Use Claude via Anthropic API to analyze issue
+            // OAuth tokens (sk-ant-oat01-...) work as API keys
+            const response = await fetch('https://api.anthropic.com/v1/messages', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': process.env.ANTHROPIC_API_KEY,
+                'anthropic-version': '2023-06-01'
+              },
+              body: JSON.stringify({
+                model: 'claude-3-5-sonnet-20241022',
+                max_tokens: 1000,
+                messages: [{
+                  role: 'user',
+                  content: `Analyze this GitHub issue and provide structured triage information:
+
+Title: ${title}
+Body: ${body}
+Current Labels: ${labels.join(', ')}
+
+Provide a JSON response with:
+1. type: "bug" | "feature" | "enhancement" | "question" | "documentation"
+2. priority: 0-4 (0=No priority, 1=Urgent, 2=High, 3=Normal, 4=Low)
+3. estimatedComplexity: "simple" | "medium" | "complex"
+4. suggestedLabels: array of label names
+5. suggestedTeam: team name or null
+6. suggestedAssignee: username or null
+7. relatedComponents: array of component names from codebase
+8. confidence: 0-1 score
+
+Consider:
+- Issue title and description content
+- Keywords and patterns
+- Similar issues in the repository
+- Codebase structure (components, hooks, design system)
+- Team expertise from knowledge graph`
+                }]
+              })
+            });
+            
+            const data = await response.json();
+            const analysis = JSON.parse(data.content[0].text);
+            
+            return analysis;
+
+      - name: Query Knowledge Graph for Context
+        id: graph-context
+        run: |
+          # Query Neo4j for related components, similar issues, team expertise
+          # This will be implemented with Neo4j Cypher queries
+          echo "graph_context=$(node scripts/linear/query-graph-context.js '${{ github.event.issue.title }}' '${{ github.event.issue.body }}')" >> $GITHUB_OUTPUT
+
+      - name: Apply Triage Labels
+        uses: actions/github-script@v7
+        env:
+          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+        with:
+          script: |
+            const analysis = ${{ steps.analyze.outputs.result }};
+            const graphContext = ${{ steps.graph-context.outputs.graph_context }};
+            
+            // Merge AI analysis with graph context
+            const finalLabels = [...analysis.suggestedLabels];
+            if (graphContext.relatedComponents) {
+              finalLabels.push(...graphContext.relatedComponents.map(c => `component:${c}`));
+            }
+            
+            // Add labels to GitHub issue
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: finalLabels
+            });
+            
+            // Create or update Linear issue
+            const linearResponse = await fetch('https://api.linear.app/graphql', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': process.env.LINEAR_API_KEY
+              },
+              body: JSON.stringify({
+                query: `
+                  mutation CreateIssue($input: IssueCreateInput!) {
+                    issueCreate(input: $input) {
+                      success
+                      issue {
+                        id
+                        identifier
+                        url
+                      }
+                    }
+                  }
+                `,
+                variables: {
+                  input: {
+                    title: context.payload.issue.title,
+                    description: context.payload.issue.body,
+                    teamId: graphContext.suggestedTeamId || analysis.suggestedTeam,
+                    priority: analysis.priority,
+                    labelIds: graphContext.labelIds || [],
+                    assigneeId: graphContext.suggestedAssigneeId || analysis.suggestedAssignee
+                  }
+                }
+              })
+            });
+            
+            const linearData = await linearResponse.json();
+            
+            // Link GitHub issue to Linear issue
+            if (linearData.data?.issueCreate?.issue) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `🔗 Linked to Linear: ${linearData.data.issueCreate.issue.url}`
+              });
+            }
+
+      - name: Update Knowledge Graph
+        run: |
+          # Update Neo4j with new issue and relationships
+          node scripts/linear/update-graph-issue.js \
+            --githubIssueNumber ${{ github.event.issue.number }} \
+            --linearIssueId "${{ steps.create-linear.outputs.issueId }}" \
+            --title "${{ github.event.issue.title }}" \
+            --type "${{ steps.analyze.outputs.type }}" \
+            --priority "${{ steps.analyze.outputs.priority }}"
+
+  triage-pr:
+    name: Triage Pull Request
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Analyze PR changes
+        id: analyze-pr
+        run: |
+          # Analyze changed files, detect breaking changes, estimate complexity
+          node scripts/linear/analyze-pr-changes.js \
+            --prNumber ${{ github.event.pull_request.number }} \
+            --base ${{ github.event.pull_request.base.sha }} \
+            --head ${{ github.event.pull_request.head.sha }}
+
+      - name: Query Impact Analysis
+        id: impact
+        run: |
+          # Query Neo4j for impact analysis of changed components
+          node scripts/linear/query-impact-analysis.js \
+            --changedFiles "${{ steps.analyze-pr.outputs.changedFiles }}" \
+            --components "${{ steps.analyze-pr.outputs.components }}"
+
+      - name: Apply PR Labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const analysis = ${{ steps.analyze-pr.outputs.result }};
+            const impact = ${{ steps.impact.outputs.result }};
+            
+            const labels = [];
+            
+            // Add type labels
+            if (analysis.hasBreakingChanges) labels.push('breaking-change');
+            if (analysis.hasNewFeatures) labels.push('feature');
+            if (analysis.hasBugFixes) labels.push('bug-fix');
+            if (analysis.affectsDesignSystem) labels.push('design-system');
+            
+            // Add impact labels
+            if (impact.affectedComponents > 5) labels.push('high-impact');
+            if (impact.requiresReview) labels.push('needs-review');
+            
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.pull_request.number,
+              labels: labels
+            });
+
+      - name: Link to Linear Issue
+        env:
+          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+        run: |
+          # Extract Linear issue IDs from PR description/commits
+          # Link PR to Linear issues
+          node scripts/linear/link-pr-to-linear.js \
+            --prNumber ${{ github.event.pull_request.number }} \
+            --prBody "${{ github.event.pull_request.body }}" \
+            --commits "${{ steps.analyze-pr.outputs.commitMessages }}"
+
+      - name: Update Knowledge Graph
+        run: |
+          # Update Neo4j with PR relationships
+          node scripts/linear/update-graph-pr.js \
+            --prNumber ${{ github.event.pull_request.number }} \
+            --commit ${{ github.event.pull_request.head.sha }} \
+            --changedFiles "${{ steps.analyze-pr.outputs.changedFiles }}"
+
