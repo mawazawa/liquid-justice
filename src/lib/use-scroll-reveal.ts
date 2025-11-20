@@ -137,6 +137,7 @@ export function useScrollReveal(options: UseScrollRevealOptions = {}): ScrollRev
   useEffect(() => {
     if (disabled || reducedMotion) {
       setIsVisible(true);
+      setHasBeenSeen(true);
       return;
     }
 
@@ -169,9 +170,7 @@ export function useScrollReveal(options: UseScrollRevealOptions = {}): ScrollRev
     }
 
     return () => {
-      if (currentRef) {
-        observer.unobserve(currentRef);
-      }
+      observer.disconnect();
     };
   }, [threshold, rootMargin, once, disabled, reducedMotion]);
 
@@ -232,7 +231,7 @@ export function useScrollReveal(options: UseScrollRevealOptions = {}): ScrollRev
  * @example
  * ```tsx
  * const delays = computeStaggeredDelays(5, { staggerDelay: 50, delay: 0 });
- * 
+ *
  * return (
  *   <ul>
  *     {items.map((item, i) => {

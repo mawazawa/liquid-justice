@@ -90,12 +90,11 @@ interface Particle {
  */
 export function useConfetti() {
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
-  const glRef = React.useRef<WebGLRenderingContext | null>(null);
   const particlesRef = React.useRef<Particle[]>([]);
   const rafRef = React.useRef<number | null>(null);
   const [isActive, setIsActive] = React.useState(false);
 
-  // Create canvas and WebGL context
+  // Create canvas - using 2D context (WebGL removed per YAGNI)
   React.useEffect(() => {
     if (!canvasRef.current) {
       const canvas = document.createElement('canvas');
@@ -111,16 +110,20 @@ export function useConfetti() {
 
       document.body.appendChild(canvas);
       canvasRef.current = canvas;
-
-      // Try WebGL, fallback to 2D canvas
-      try {
-        glRef.current = canvas.getContext('webgl') || canvas.getContext('experimental-webgl') as WebGLRenderingContext;
-      } catch (e) {
-        console.warn('WebGL not supported, falling back to 2D canvas');
-      }
     }
 
+    // Handle window resize
+    const handleResize = () => {
+      if (canvasRef.current) {
+        canvasRef.current.width = window.innerWidth;
+        canvasRef.current.height = window.innerHeight;
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+
     return () => {
+      window.removeEventListener('resize', handleResize);
       if (canvasRef.current && document.body.contains(canvasRef.current)) {
         document.body.removeChild(canvasRef.current);
       }

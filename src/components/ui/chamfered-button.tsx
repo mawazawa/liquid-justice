@@ -149,7 +149,7 @@ export const ChamferedButton = React.forwardRef<HTMLButtonElement, ChamferedButt
       variant,
       size,
       asChild = false,
-      haptic = "medium",
+      haptic,
       chamferDepth = "medium",
       glow = false,
       onClick,

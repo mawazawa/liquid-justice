@@ -84,8 +84,9 @@ export {
 // Scroll Animation Hooks
 export {
   useScrollReveal,
-  useStaggeredReveal,
   useParallaxScroll,
+  computeStaggeredDelays,
+  usePrefersReducedMotion,
   type UseScrollRevealOptions,
   type ScrollRevealResult
 } from './lib/use-scroll-reveal';

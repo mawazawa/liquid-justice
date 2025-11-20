@@ -145,8 +145,8 @@ export const HeroSection = React.forwardRef<HTMLElement, HeroSectionProps>(
       };
     }, [scrollReveal, reducedMotion]);
 
-    // Merge refs
-    React.useImperativeHandle(ref, () => sectionRef.current as HTMLElement);
+    // Merge refs - handle null case properly
+    React.useImperativeHandle(ref, () => sectionRef.current ?? (null as unknown as HTMLElement));
 
     // Background classes
     const backgroundClasses = {
@@ -374,8 +374,8 @@ export const HeroWithMedia = React.forwardRef<HTMLElement, HeroWithMediaProps>(
       };
     }, [scrollReveal, reducedMotion]);
 
-    // Merge refs
-    React.useImperativeHandle(ref, () => sectionRef.current as HTMLElement);
+    // Merge refs - handle null case properly
+    React.useImperativeHandle(ref, () => sectionRef.current ?? (null as unknown as HTMLElement));
 
     // Background classes
     const backgroundClasses = {

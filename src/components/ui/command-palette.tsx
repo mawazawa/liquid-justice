@@ -201,7 +201,15 @@ export const CommandPalette = React.forwardRef<
         {/* Backdrop */}
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+          role="button"
+          tabIndex={-1}
           onClick={onClose}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              onClose();
+            }
+          }}
+          aria-label="Close command palette"
         />
 
         {/* Command Palette */}
@@ -228,6 +236,7 @@ export const CommandPalette = React.forwardRef<
             {breadcrumbs && pages.length > 1 && (
               <div className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground border-b border-border">
                 <button
+                  type="button"
                   onClick={goBack}
                   className="hover:text-foreground transition-colors"
                 >

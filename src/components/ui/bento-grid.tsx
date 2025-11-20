@@ -109,7 +109,7 @@ export const BentoGrid = React.forwardRef<HTMLDivElement, BentoGridProps>(
         }
       : {
           role: "group" as const,
-        };
+    };
 
     return (
       <div
@@ -134,32 +134,11 @@ export interface BentoCardProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Row span */
   rowSpan?: number;
 
-  /** Column span on mobile */
-  spanMobile?: number;
-
-  /** Column span on tablet */
-  spanTablet?: number;
-
-  /** Column span on desktop */
-  spanDesktop?: number;
-
-  /** Row span on mobile */
-  rowSpanMobile?: number;
-
-  /** Row span on tablet */
-  rowSpanTablet?: number;
-
-  /** Row span on desktop */
-  rowSpanDesktop?: number;
-
   /** Visual variant */
   variant?: "default" | "glass" | "gradient" | "elevated";
 
   /** Enable 3D hover effect */
   hover3D?: boolean;
-
-  /** Enable magnetic hover effect */
-  magnetic?: boolean;
 }
 
 export const BentoCard = React.forwardRef<HTMLDivElement, BentoCardProps>(
@@ -167,15 +146,8 @@ export const BentoCard = React.forwardRef<HTMLDivElement, BentoCardProps>(
     {
       span = 1,
       rowSpan = 1,
-      spanMobile,
-      spanTablet,
-      spanDesktop,
-      rowSpanMobile,
-      rowSpanTablet,
-      rowSpanDesktop,
       variant = "default",
       hover3D = false,
-      magnetic = false,
       className,
       style,
       children,
@@ -240,7 +212,7 @@ export const BentoCard = React.forwardRef<HTMLDivElement, BentoCardProps>(
         }
       : {
           role: "group" as const,
-        };
+    };
 
     // Variant styles
     const variantClasses = {
@@ -270,9 +242,9 @@ export const BentoCard = React.forwardRef<HTMLDivElement, BentoCardProps>(
           "bento-card rounded-lg p-6 transition-all duration-300",
           variantClasses[variant],
           hover3D && "hover-lift",
-          magnetic && "cursor-pointer",
-          !isInteractive && "cursor-default", // Avoid pointer styling for non-interactive
-          "squircle-lg", // Apply squircle corners
+          isInteractive && "cursor-pointer",
+          !isInteractive && "cursor-default",
+          "squircle-lg",
           className
         )}
         style={gridStyle}
