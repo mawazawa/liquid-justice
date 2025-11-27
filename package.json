@@ -1,6 +1,6 @@
 {
   "name": "@liquid-justice/design-system",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Modern Justice Design System - Premium UI components for legal tech applications",
   "type": "module",
   "main": "./dist/liquid-justice.cjs",
@@ -50,8 +50,8 @@
   "author": "Liquid Justice",
   "license": "MIT",
   "peerDependencies": {
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.1",
@@ -77,8 +77,8 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
-    "@types/react": "^18.3.18",
-    "@types/react-dom": "^18.3.5",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "@typescript-eslint/eslint-plugin": "^8.18.1",
     "@typescript-eslint/parser": "^8.18.1",
     "@vitejs/plugin-react-swc": "^3.7.2",
